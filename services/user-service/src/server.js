@@ -14,12 +14,12 @@ app.use(express.json());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
 app.use(limiter);
 
-// Health check endpoint (for K8s probes)
+// Health check
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy',
@@ -28,9 +28,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Ready check endpoint
+// Ready check
 app.get('/ready', (req, res) => {
-  // Check database connection, etc.
   res.status(200).json({ status: 'ready' });
 });
 
@@ -38,11 +37,11 @@ app.get('/ready', (req, res) => {
 app.get('/api/users', (req, res) => {
   res.json({ 
     message: 'User service is running',
-    users: [] // TODO: Implement actual logic
+    users: []
   });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
