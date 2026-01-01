@@ -1,0 +1,28 @@
+# Node
+node_modules/
+npm-debug.log*
+.env
+.env.local
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# AWS
+.aws/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
