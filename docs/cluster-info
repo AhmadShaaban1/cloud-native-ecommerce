@@ -1,4 +1,5 @@
 {
+    {
     "kind": "NodeList",
     "apiVersion": "v1",
     "metadata": {
@@ -357,7 +358,7 @@
             }
         }
     ]
-}
+}, //changed
 {
     "kind": "EventList",
     "apiVersion": "v1",
@@ -7178,4 +7179,5 @@ I0102 20:03:34.793051       1 proxier.go:822] "SyncProxyRules complete" ipFamily
         "resourceVersion": "2585"
     },
     "items": null
+}
 }
