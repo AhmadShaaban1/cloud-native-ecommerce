@@ -1,0 +1,35 @@
+===========================================
+Terraform Outputs - Dev Environment
+===========================================
+Date: January 2, 2026
+Cluster: ecommerce-dev
+Region: us-east-1
+===========================================
+
+VPC Details:
+------------
+VPC ID: vpc-xxxxxxxxxxxxx
+CIDR: 10.0.0.0/16
+
+EKS Cluster:
+-----------
+Name: ecommerce-dev
+Endpoint: https://xxxxx.eks.us-east-1.amazonaws.com
+Version: 1.31
+
+Kubectl Configuration:
+---------------------
+aws eks update-kubeconfig --region us-east-1 --name ecommerce-dev
+
+Node Information:
+----------------
+Instance Type: t3.small
+Desired Size: 2
+Min Size: 1
+Max Size: 3
+
+===========================================
+configure_kubectl = "aws eks update-kubeconfig --region us-east-1 --name ecommerce-dev"
+eks_cluster_endpoint = "https://DC49BAD6826C5ACCBDE1C971D4B470FE.gr7.us-east-1.eks.amazonaws.com"
+eks_cluster_name = "ecommerce-dev"
+vpc_id = "vpc-0a7486bcdaa40dab4"
