@@ -36,7 +36,7 @@ variable "node_role_arn" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.34"
+  default     = "1.31"
 }
 
 variable "node_instance_types" {
@@ -67,4 +67,10 @@ variable "node_disk_size" {
   description = "Disk size for nodes (GB)"
   type        = number
   default     = 20
+}
+
+variable "ssh_key_name" {
+  description = "SSH key name for node access"
+  type        = string
+  default     = null
 }

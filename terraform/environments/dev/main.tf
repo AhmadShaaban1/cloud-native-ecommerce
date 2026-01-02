@@ -59,13 +59,14 @@ module "eks" {
   public_subnet_ids  = module.vpc.public_subnet_ids
   cluster_role_arn   = module.security.eks_cluster_role_arn
   node_role_arn      = module.security.eks_node_group_role_arn
-
-  kubernetes_version = "1.34"
-
-
-  node_instance_types = ["t3.small"] # 2 vCPU, 2GB RAM
-  node_desired_size   = 2            # 2 nodes for HA
-  node_min_size       = 1            # Can scale down to 1
-  node_max_size       = 3            # Can scale up to 3
-  node_disk_size      = 20           # 20GB per node
+  
+  kubernetes_version   = "1.31"
+  node_instance_types  = ["t3.small"]
+  node_desired_size    = 2
+  node_min_size        = 1
+  node_max_size        = 3
+  node_disk_size       = 20
+  
+  # Add SSH key
+  ssh_key_name = "ecommerce-dev-key"  # Add this line
 }

@@ -45,11 +45,11 @@ resource "aws_security_group" "eks_nodes" {
 
   # Allow nodes to communicate with each other
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-    description = "Allow nodes to communicate with each other"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["192.168.0.0/16"]  
+    description = "Allow SSH"
   }
 
   # Allow control plane to communicate with nodes
@@ -121,10 +121,14 @@ resource "aws_eks_node_group" "main" {
     max_unavailable = 1
   }
 
-  # # Apply node security group
-  # remote_access {
-  #   source_security_group_ids = [aws_security_group.eks_nodes.id]
-  # }
+# Add SSH access if key is provided
+  dynamic "remote_access" {
+    for_each = var.ssh_key_name != null ? [1] : []
+    content {
+      ec2_ssh_key               = var.ssh_key_name
+      source_security_group_ids = [aws_security_group.eks_nodes.id]
+    }
+  }
 
   labels = {
     Environment = var.environment
