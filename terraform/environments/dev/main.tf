@@ -1,0 +1,71 @@
+terraform {
+  required_version = ">= 1.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      Project     = var.project_name
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+  }
+}
+
+# Get available AZs
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# VPC Module
+module "vpc" {
+  source = "../../modules/vpc"
+
+  project_name         = var.project_name
+  environment          = var.environment
+  vpc_cidr             = "10.0.0.0/16"
+  availability_zones   = slice(data.aws_availability_zones.available.names, 0, 2)
+  public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+  enable_nat_gateway   = true
+  single_nat_gateway   = true # Single NAT for cost savings
+}
+
+# Security Module (IAM Roles)
+module "security" {
+  source = "../../modules/security"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+# EKS Module - 2x t3.small + NAT
+module "eks" {
+  source = "../../modules/eks"
+
+  project_name       = var.project_name
+  environment        = var.environment
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+  public_subnet_ids  = module.vpc.public_subnet_ids
+  cluster_role_arn   = module.security.eks_cluster_role_arn
+  node_role_arn      = module.security.eks_node_group_role_arn
+
+  kubernetes_version = "1.34"
+
+
+  node_instance_types = ["t3.small"] # 2 vCPU, 2GB RAM
+  node_desired_size   = 2            # 2 nodes for HA
+  node_min_size       = 1            # Can scale down to 1
+  node_max_size       = 3            # Can scale up to 3
+  node_disk_size      = 20           # 20GB per node
+}
