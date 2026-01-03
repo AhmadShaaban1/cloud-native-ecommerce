@@ -60,11 +60,11 @@ module "eks" {
   cluster_role_arn   = module.security.eks_cluster_role_arn
   node_role_arn      = module.security.eks_node_group_role_arn
   
-  kubernetes_version   = "1.31"
+  kubernetes_version   = "1.32"
   node_instance_types  = ["t3.small"]
-  node_desired_size    = 2
+  node_desired_size    = 3
   node_min_size        = 1
-  node_max_size        = 3
+  node_max_size        = 4
   node_disk_size       = 20
   
   # Add SSH key
