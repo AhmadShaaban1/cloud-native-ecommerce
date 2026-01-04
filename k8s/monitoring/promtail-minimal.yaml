@@ -1,0 +1,16 @@
+config:
+  clients:
+    - url: http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 100Mi
+  limits:
+    cpu: 100m
+    memory: 200Mi
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: prometheus

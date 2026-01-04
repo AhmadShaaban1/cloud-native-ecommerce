@@ -1,4 +1,4 @@
-# CRITICAL: This must be SingleBinary
+# Single Binary - Simplest deployment
 deploymentMode: SingleBinary
 
 loki:
@@ -20,37 +20,40 @@ loki:
           prefix: index_
           period: 24h
 
-# Single Binary - THE ONLY ACTIVE MODE
+# Only active component
 singleBinary:
   replicas: 1
   
   resources:
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 100m
+      memory: 256Mi
     limits:
-      cpu: 200m
+      cpu: 300m
       memory: 512Mi
   
   persistence:
     enabled: true
     storageClass: ebs-sc
-    size: 5Gi
+    size: 10Gi
 
 # Gateway
 gateway:
   enabled: true
   replicas: 1
   
+  service:
+    type: ClusterIP
+  
   resources:
     requests:
-      cpu: 25m
-      memory: 64Mi
-    limits:
       cpu: 50m
-      memory: 128Mi
+      memory: 100Mi
+    limits:
+      cpu: 100m
+      memory: 200Mi
 
-# DISABLE ALL OTHER MODES - CRITICAL!
+# DISABLE EVERYTHING ELSE
 write:
   replicas: 0
 
@@ -81,7 +84,7 @@ compactor:
 ruler:
   enabled: false
 
-# DISABLE RESOURCE-HEAVY COMPONENTS
+# No monitoring components
 monitoring:
   selfMonitoring:
     enabled: false
@@ -91,10 +94,13 @@ monitoring:
   lokiCanary:
     enabled: false
 
-test:
+# No caches
+chunksCache:
   enabled: false
 
-# DISABLE CACHES
+resultsCache:
+  enabled: false
+
 memcachedChunks:
   enabled: false
 
@@ -107,8 +113,6 @@ memcachedIndexQueries:
 memcachedIndexWrites:
   enabled: false
 
-resultsCache:
-  enabled: false
-
-chunksCache:
+# No test
+test:
   enabled: false

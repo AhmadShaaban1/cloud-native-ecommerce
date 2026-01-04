@@ -1,20 +1,18 @@
-# Prometheus Configuration
+# Prometheus - Optimized for 4x t3.small nodes
 prometheus:
   prometheusSpec:
-    # Retention
-    retention: 15d
-    retentionSize: "10GB"
+    retention: 7d
+    retentionSize: "5GB"
     
-    # Resources
     resources:
       requests:
-        cpu: 200m
+        cpu: 150m
         memory: 512Mi
       limits:
         cpu: 500m
         memory: 1Gi
     
-    # Storage with EBS
+    # Use EBS storage
     storageSpec:
       volumeClaimTemplate:
         spec:
@@ -24,24 +22,17 @@ prometheus:
             requests:
               storage: 10Gi
     
-    # Service monitors
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
 
-# Grafana Configuration
+# Grafana
 grafana:
   enabled: true
-  
-  # Admin credentials
   adminPassword: "admin123"
   
-  # Service type - LoadBalancer for external access
   service:
-    type: LoadBalancer
-    annotations:
-      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    type: ClusterIP
   
-  # Resources
   resources:
     requests:
       cpu: 100m
@@ -50,19 +41,24 @@ grafana:
       cpu: 200m
       memory: 512Mi
   
-  # Persistence with EBS
+  # Use EBS storage
   persistence:
     enabled: true
     storageClassName: ebs-sc
     size: 5Gi
   
-  # Default dashboards
   defaultDashboardsEnabled: true
   
-  # Additional datasources
-  additionalDataSources: []
+  # Loki datasource - CORRECT URL
+  additionalDataSources:
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki-gateway.monitoring.svc.cluster.local
+    jsonData:
+      maxLines: 1000
 
-# Alertmanager Configuration
+# Alertmanager
 alertmanager:
   enabled: true
   
@@ -75,7 +71,6 @@ alertmanager:
         cpu: 100m
         memory: 256Mi
     
-    # Storage with EBS
     storage:
       volumeClaimTemplate:
         spec:
@@ -88,13 +83,35 @@ alertmanager:
 # Node Exporter
 nodeExporter:
   enabled: true
+  resources:
+    requests:
+      cpu: 20m
+      memory: 50Mi
+    limits:
+      cpu: 50m
+      memory: 100Mi
 
 # Kube State Metrics
 kubeStateMetrics:
   enabled: true
+  resources:
+    requests:
+      cpu: 20m
+      memory: 50Mi
+    limits:
+      cpu: 100m
+      memory: 150Mi
 
-# Disable admission webhooks (causing timeout)
+# Prometheus Operator
 prometheusOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  
   admissionWebhooks:
     enabled: true
     patch:
