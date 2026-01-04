@@ -39,6 +39,10 @@ jobs:
 
     - name: Install dependencies
       working-directory: services/user-service
+      run: npm Install
+
+    - name: Install dependencies
+      working-directory: services/user-service
       run: npm ci
 
     - name: Run tests

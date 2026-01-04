@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3004;
+app.listen(PORT);
 
 app.use(helmet());
 app.use(cors());
