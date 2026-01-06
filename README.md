@@ -369,7 +369,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 For questions or feedback, reach out to:
 - **GitHub:** [@AhmadShaaban1](https://github.com/AhmadShaaban1)
-- **Email:** ahmad.shaaban@example.com
+- **Email:** ahmedshaaban2807@gmail.com
 
 ---
 
