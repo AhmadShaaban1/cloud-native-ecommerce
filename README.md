@@ -128,16 +128,23 @@ cloud-native-ecommerce/
 - GitHub Actions & Jenkins
 - Automated build & deploy
 
-### 📅 Phase 6 – Observability
-- Prometheus & Grafana
-- Logging & alerting
+### ✅ Phase 6: Observability (Complete)
+- [x] Prometheus for metrics collection
+- [x] Grafana for visualization
+- [x] Loki for log aggregation
+- [x] Promtail for log collection
+- [x] Node Exporter for infrastructure metrics
+- [x] Kube State Metrics for cluster metrics
+- [x] Custom dashboards configured
+- [x] All running on 4-node cluster
 
-### 📅 Phase 7 – Security Hardening
-- Network policies
-- Pod Security Standards
-- Secrets management
-- TLS & RBAC hardening
-
+### 🔄 Phase 7: Security & Production Hardening (Next)
+- [ ] Network policies
+- [ ] Pod security standards
+- [ ] Secrets management
+- [ ] SSL/TLS certificates
+- [ ] RBAC fine-tuning
+- [ ] Security scanning
 ---
 
 ## 🛠️ Getting Started
