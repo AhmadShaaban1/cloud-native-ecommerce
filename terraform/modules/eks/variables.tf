@@ -48,7 +48,7 @@ variable "node_instance_types" {
 variable "node_desired_size" {
   description = "Desired number of nodes"
   type        = number
-  default     = 2
+  default     = 8
 }
 
 variable "node_min_size" {
@@ -60,7 +60,7 @@ variable "node_min_size" {
 variable "node_max_size" {
   description = "Maximum number of nodes"
   type        = number
-  default     = 4
+  default     = 10
 }
 
 variable "node_disk_size" {
