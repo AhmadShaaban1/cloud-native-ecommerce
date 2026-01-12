@@ -36,13 +36,13 @@ variable "node_role_arn" {
 variable "kubernetes_version" {
   description = "Kubernetes version"
   type        = string
-  default     = "1.32"
+  default     = "1.34"
 }
 
 variable "node_instance_types" {
   description = "EC2 instance types for nodes"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["t3.small"]
 }
 
 variable "node_desired_size" {
