@@ -2,39 +2,39 @@
 
 set -e
 
-# echo "=================================================="
-# echo "🚀 FINAL MONITORING STACK INSTALLATION"
-# echo "=================================================="
-# echo ""
+echo "=================================================="
+echo "🚀 FINAL MONITORING STACK INSTALLATION"
+echo "=================================================="
+echo ""
 
-# # Check nodes
-# NODE_COUNT=$(kubectl get nodes --no-headers | wc -l)
-# echo "📊 Current nodes: $NODE_COUNT"
+# Check nodes
+NODE_COUNT=$(kubectl get nodes --no-headers | wc -l)
+echo "📊 Current nodes: $NODE_COUNT"
 
-# if [ $NODE_COUNT -lt 4 ]; then
-#     echo "⚠️  Warning: Less than 4 nodes. Monitoring may have resource issues."
-#     echo "   Recommended: Scale to 4 nodes first"
-#     read -p "Continue anyway? (y/n) " -n 1 -r
-#     echo
-#     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-#         exit 1
-#     fi
-# fi
+if [ $NODE_COUNT -lt 4 ]; then
+    echo "⚠️  Warning: Less than 4 nodes. Monitoring may have resource issues."
+    echo "   Recommended: Scale to 4 nodes first"
+    read -p "Continue anyway? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
 
-# echo ""
-# echo "🧹 Step 1: Complete cleanup..."
-# helm uninstall prometheus -n monitoring 2>/dev/null || true
-# helm uninstall loki -n monitoring 2>/dev/null || true
-# helm uninstall promtail -n monitoring 2>/dev/null || true
+echo ""
+echo "🧹 Step 1: Complete cleanup..."
+helm uninstall prometheus -n monitoring 2>/dev/null || true
+helm uninstall loki -n monitoring 2>/dev/null || true
+helm uninstall promtail -n monitoring 2>/dev/null || true
 
-# kubectl delete namespace monitoring --force --grace-period=0 2>/dev/null || true
+kubectl delete namespace monitoring --force --grace-period=0 2>/dev/null || true
 
-# echo "⏳ Waiting for cleanup (30s)..."
-# sleep 30
+echo "⏳ Waiting for cleanup (30s)..."
+sleep 30
 
-# echo ""
-# echo "📦 Step 2: Create monitoring namespace..."
-# kubectl create namespace monitoring
+echo ""
+echo "📦 Step 2: Create monitoring namespace..."
+kubectl create namespace monitoring
 
 echo ""
 echo "💾 Step 3: Verify StorageClass exists..."
@@ -58,7 +58,7 @@ echo ""
 echo "📝 Step 5: Installing Loki..."
 helm install loki grafana/loki \
   --namespace monitoring \
-  --values k8s/monitoring/loki-minimal.yaml \
+  --values ../k8s/monitoring/loki-minimal.yaml \
   --set deploymentMode=SingleBinary \
   --set singleBinary.replicas=1 \
   --set monitoring.lokiCanary.enabled=false \
