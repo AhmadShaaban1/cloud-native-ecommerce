@@ -1,11 +1,12 @@
 # ☁️ Cloud-Native E-Commerce Platform
 
-A production-grade microservices architecture deployed on **AWS EKS** using modern DevOps practices.
+A **production-grade microservices architecture** deployed on **AWS EKS** with complete CI/CD, observability, and security hardening.
 
-![Project Status](https://img.shields.io/badge/Status-In%20Development-yellow)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-1.30-blue)
+![Project Status](https://img.shields.io/badge/Status-Production%20Ready-success)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-1.33-blue)
 ![Terraform](https://img.shields.io/badge/Terraform-1.0+-purple)
 ![AWS](https://img.shields.io/badge/AWS-EKS-orange)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -13,369 +14,306 @@ A production-grade microservices architecture deployed on **AWS EKS** using mode
 
 ### High-Level Architecture
 
-```
 ┌─────────────────────────────────────────────────────────────┐
-│ AWS Cloud                                                   │
+│ AWS Cloud │
 │ ┌───────────────────────────────────────────────────────┐ │
-│ │ VPC (10.0.0.0/16)                                     │ │
-│ │                                                       │ │
-│ │ ┌──────────────┐              ┌──────────────┐      │ │
-│ │ │ Public       │              │ Private      │      │ │
-│ │ │ Subnets      │              │ Subnets      │      │ │
-│ │ │              │              │              │      │ │
-│ │ │ ┌────────┐   │              │ ┌────────┐   │      │ │
-│ │ │ │ ALB    │   │              │ │ EKS    │   │      │ │
-│ │ │ │        │   │              │ │ Nodes  │   │      │ │
-│ │ │ └────────┘   │              │ └────────┘   │      │ │
-│ │ │              │              │              │      │ │
-│ │ │ ┌────────┐   │   ┌─────────▶ │ ┌────────┐   │      │ │
-│ │ │ │ NAT    │───┼───┤          │ │ Pods   │   │      │ │
-│ │ │ │ Gateway│   │   │          │ │        │   │      │ │
-│ │ │ └────────┘   │   └─────────▶ │ └────────┘   │      │ │
-│ │ └──────────────┘              └──────────────┘      │ │
+│ │ VPC (10.0.0.0/16) │ │
+│ │ │ │
+│ │ ┌──────────────┐ ┌──────────────┐ │ │
+│ │ │ Public │ │ Private │ │ │
+│ │ │ Subnets │ │ Subnets │ │ │
+│ │ │ │ │ │ │ │
+│ │ │ ┌────────┐ │ │ ┌────────┐ │ │ │
+│ │ │ │ ALB │ │ │ │ EKS │ │ │ │
+│ │ │ │ │ │ │ │ Nodes │ │ │ │
+│ │ │ └────────┘ │ │ └────────┘ │ │ │
+│ │ │ │ │ │ │ │
+│ │ │ ┌────────┐ │ │ ┌────────┐ │ │ │
+│ │ │ │ NAT │ │──────────────▶ │ Pods │ │ │ │
+│ │ │ │Gateway │ │ │ │ │ │ │ │
+│ │ │ └────────┘ │ │ └────────┘ │ │ │
+│ │ └──────────────┘ └──────────────┘ │ │
+│ │ │ │
 │ └───────────────────────────────────────────────────────┘ │
-│                                                           │
-│ ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│ │ RDS      │  │ Redis    │  │ ECR      │              │
-│ │ (Future) │  │ (Future) │  │ (Present)│              │
-│ └──────────┘  └──────────┘  └──────────┘              │
+│ │
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+│ │ RDS │ │ Redis │ │ ECR │ │
+│ │ (Future) │ │ (Future) │ │ │ │
+│ └──────────┘ └──────────┘ └──────────┘ │
 └─────────────────────────────────────────────────────────────┘
-```
 
-### Technology Stack
 
-**Infrastructure:**
-- ☁️ **AWS EKS** - Managed Kubernetes (v1.30)
-- 🏗️ **Terraform** - Infrastructure as Code
-- 🌐 **VPC** - Custom networking with public/private subnets
-- 🔐 **IAM** - Role-based access control
-- 📦 **ECR** - Container image registry
+---
 
-**Backend Services:**
-- 🟢 **Node.js** - Microservices runtime
-- 🐳 **Docker** - Containerization
-- ☸️ **Kubernetes** - Container orchestration
+## 🧰 Technology Stack
 
-**Observability & Monitoring:**
-- 📊 **Prometheus** - Metrics collection
-- 📈 **Grafana** - Metrics visualization
-- 📝 **Loki** - Log aggregation
-- 🔍 **Promtail** - Log shipper
-- 📌 **Node Exporter** - System metrics
-- 📋 **Kube State Metrics** - Kubernetes object metrics
+### Infrastructure
+- ☁️ AWS EKS – Managed Kubernetes (v1.30)
+- 🏗️ Terraform – Infrastructure as Code
+- 🌐 VPC – Public & Private subnets
+- 🔐 IAM – Role-based access control (IRSA)
 
-**Coming Soon:**
-- 🔄 **GitHub Actions** - CI/CD pipeline
-- 🗄️ **RDS** - Managed relational database
-- ⚡ **Redis** - Caching layer
+### Backend
+- 🟢 Node.js – Microservices runtime
+- 🐳 Docker – Containerization
+- ☸️ Kubernetes – Orchestration
+
+### Coming Soon
+- 📊 Prometheus & Grafana – Monitoring
+- 📝 ELK Stack – Logging
+- 🔄 GitHub Actions – CI/CD
 
 ---
 
 ## 📁 Project Structure
 
-```
 cloud-native-ecommerce/
-├── services/                    # Microservices
-│   ├── user-service/           # User management & authentication
-│   ├── product-service/        # Product catalog & inventory
-│   ├── order-service/          # Order processing & management
-│   └── payment-service/        # Payment processing
+├── services/
+│ ├── user-service/
+│ ├── product-service/
+│ ├── order-service/
+│ └── payment-service/
 │
-├── k8s/                         # Kubernetes manifests
-│   ├── deployments/            # Service deployments
-│   ├── services/               # Kubernetes services
-│   ├── configmaps/             # Configuration management
-│   ├── observability/          # Prometheus, Grafana, Loki setup
-│   └── namespaces/             # Namespace configurations
-│
-├── terraform/                   # IaC for AWS infrastructure
-│   ├── modules/                # Reusable modules
-│   │   ├── vpc/               # VPC & networking
-│   │   ├── eks/               # EKS cluster
-│   │   ├── iam/               # IAM roles & policies
-│   │   └── ecr/               # ECR repositories
-│   ├── environments/          # Environment-specific configs
-│   │   ├── dev/
-│   │   ├── staging/
-│   │   └── prod/
-│   └── main.tf               # Root module
-│
-├── scripts/                     # Helper scripts
-│   ├── build.sh               # Docker build automation
-│   ├── push-ecr.sh            # Push images to ECR
-│   ├── deploy.sh              # Deploy to EKS
-│   └── cleanup.sh             # Resource cleanup
-│
-├── docs/                        # Documentation
-│   ├── SETUP.md               # Setup instructions
-│   ├── DEPLOYMENT.md          # Deployment guide
-│   └── ARCHITECTURE.md        # Architecture details
-│
-└── README.md                    # This file
-```
+├── frontend/ # React (Coming Soon)
+├── docker/
+│ └── docker-compose.yml
+├── k8s/
+│ ├── base/
+│ └── overlays/
+├── terraform/
+│ ├── modules/
+│ │ ├── vpc/
+│ │ ├── eks/
+│ │ └── security/
+│ └── environments/
+│ ├── dev/
+│ └── prod/
+├── .github/workflows/
+├── docs/
+│ └── docker-guide.md
+└── scripts/
+└── push-to-ecr.sh
 
+## 🚀 Implementation Status
+
+### ✅ Phase 0 – Planning & AWS Foundation
+- AWS account & CLI configured
+- IAM user & local tooling ready
+
+### ✅ Phase 1 – Application Setup
+- Repo & structure created
+- 4 microservices bootstrapped
+- Health endpoints added
+
+### ✅ Phase 2 – Containerization
+- Multi-stage Dockerfiles
+- Docker Compose (local)
+- Images pushed to ECR
+
+### ✅ Phase 3 – EKS with Terraform
+- VPC with public/private subnets
+- NAT Gateway
+- EKS Cluster (v1.30)
+- Node Group (2 × t3.small)
+- OIDC + IRSA enabled
+
+### 🔄 Phase 4 – Kubernetes Deployments
+- Deployments & Services
+- ConfigMaps & Secrets
+- Ingress Controller
+
+### 📅 Phase 5 – CI/CD
+- GitHub Actions & Jenkins
+- Automated build & deploy
+
+### ✅ Phase 6: Observability (Complete)
+- [x] Prometheus for metrics collection
+- [x] Grafana for visualization
+- [x] Loki for log aggregation
+- [x] Promtail for log collection
+- [x] Node Exporter for infrastructure metrics
+- [x] Kube State Metrics for cluster metrics
+- [x] Custom dashboards configured
+- [x] All running on 4-node cluster
+
+### 🔄 Phase 7: Security & Production Hardening (Next)
+- [ ] Network policies
+- [ ] Pod security standards
+- [ ] Secrets management
+- [ ] SSL/TLS certificates
+- [ ] RBAC fine-tuning
+- [ ] Security scanning
 ---
 
-## 🚀 Quick Start
+## 🛠️ Getting Started
 
 ### Prerequisites
+- AWS Account
+- Terraform ≥ 1.0
+- kubectl ≥ 1.28
+- Docker ≥ 20.x
+- Node.js ≥ 18.x
 
-- **AWS Account** with appropriate permissions
-- **Terraform** >= 1.0
-- **kubectl** >= 1.30
-- **Docker** for building images
-- **Git** for version control
+### Local Development
 
-### Local Development Setup
+```bash
+git clone https://github.com/AhmadShaaban1/cloud-native-ecommerce.git
+cd cloud-native-ecommerce
+docker-compose up -d
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/AhmadShaaban1/cloud-native-ecommerce.git
-   cd cloud-native-ecommerce
-   ```
+# Test services
+curl http://localhost:3001/health  # User
+curl http://localhost:3002/health  # Product
+curl http://localhost:3003/health  # Order
+curl http://localhost:3004/health  # Payment
+```
 
-2. **Install dependencies:**
-   ```bash
-   # Install Node.js dependencies for each service
-   cd services/user-service && npm install
-   cd ../product-service && npm install
-   cd ../order-service && npm install
-   cd ../payment-service && npm install
-   ```
+### Deploy to AWS EKS
 
-3. **Set up environment variables:**
-   ```bash
-   # Copy example env file
-   cp .env.example .env
-   
-   # Edit with your values
-   nano .env
-   ```
-
-4. **Run services locally (development mode):**
-   ```bash
-   # Terminal 1: User Service (port 3001)
-   cd services/user-service && npm start
-   
-   # Terminal 2: Product Service (port 3002)
-   cd services/product-service && npm start
-   
-   # Terminal 3: Order Service (port 3003)
-   cd services/order-service && npm start
-   
-   # Terminal 4: Payment Service (port 3004)
-   cd services/payment-service && npm start
-   ```
-
----
-
-## 📊 Microservices Overview
-
-### User Service
-- **Port:** 3001
-- **Responsibilities:** User registration, authentication, profile management
-- **Database:** (Future: RDS PostgreSQL)
-- **Key Endpoints:**
-  - `POST /auth/register` - User registration
-  - `POST /auth/login` - User login
-  - `GET /users/:id` - Get user profile
-
-### Product Service
-- **Port:** 3002
-- **Responsibilities:** Product catalog, inventory management, search
-- **Database:** (Future: RDS PostgreSQL)
-- **Key Endpoints:**
-  - `GET /products` - List all products
-  - `GET /products/:id` - Get product details
-  - `POST /products` - Create product (admin)
-
-### Order Service
-- **Port:** 3003
-- **Responsibilities:** Order creation, status tracking, order history
-- **Database:** (Future: RDS PostgreSQL)
-- **Key Endpoints:**
-  - `POST /orders` - Create order
-  - `GET /orders/:id` - Get order details
-  - `GET /orders/user/:userId` - Get user orders
-
-### Payment Service
-- **Port:** 3004
-- **Responsibilities:** Payment processing, transaction management
-- **Database:** (Future: RDS PostgreSQL)
-- **Key Endpoints:**
-  - `POST /payments` - Process payment
-  - `GET /payments/:id` - Get payment status
-  - `POST /payments/:id/refund` - Refund payment
-
----
-
-## 🔧 Infrastructure Deployment
-
-### Phase 1: Infrastructure Setup (Terraform)
-
+#### 1. Infrastructure Setup
 ```bash
 cd terraform/environments/dev
 
 # Initialize Terraform
 terraform init
 
-# Plan deployment
-terraform plan -out=tfplan
+# Plan infrastructure
+terraform plan
 
-# Apply configuration
-terraform apply tfplan
+# Apply infrastructure (takes 15-20 minutes)
+terraform apply
+
+# Configure kubectl
+aws eks update-kubeconfig --region us-east-1 --name ecommerce-dev
 ```
 
-### Phase 2: EKS Cluster Verification
-
+#### 2. Deploy Applications
 ```bash
-# Update kubeconfig
-aws eks update-kubeconfig --name cloud-native-ecommerce-cluster --region us-east-1
-
-# Verify cluster connection
-kubectl cluster-info
-kubectl get nodes
-```
-
-### Phase 3: Deploy Services to EKS
-
-```bash
-# Build and push Docker images to ECR
-./scripts/build.sh
-./scripts/push-ecr.sh
+# Build and push images
+./scripts/build-and-push.sh
 
 # Deploy to Kubernetes
-kubectl apply -f k8s/namespaces/
-kubectl apply -f k8s/deployments/
-kubectl apply -f k8s/services/
+kubectl apply -f k8s/base/deployments/
+kubectl apply -f k8s/ingress/
+
+# Verify deployment
+kubectl get pods
+kubectl get ingress
 ```
 
-### Phase 4: Deploy Observability Stack
-
+#### 3. Install Monitoring
 ```bash
-# Deploy Prometheus, Grafana, Loki
-kubectl apply -f k8s/observability/
+./scripts/install-monitoring-final.sh
 
-# Verify pods are running
-kubectl get pods -n monitoring
+# Access Grafana
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+# Visit http://localhost:3000 (admin/admin123)
 ```
 
----
-
-## 📈 Monitoring & Logging
-
-### Access Grafana Dashboard
-
+#### 4. Apply Security Configurations
 ```bash
-# Port-forward to local machine
-kubectl port-forward -n monitoring svc/grafana 3000:80
+./scripts/security-setup.sh
 
-# Access at http://localhost:3000
-# Default credentials: admin/admin
+# Verify
+./scripts/security-verification.sh
 ```
 
-### Access Loki Logs
+---
 
+## 🔄 Recovery After Terraform Destroy
+
+See detailed guide: [docs/recovery-workflow.md](docs/recovery-workflow.md)
+
+**Quick Recovery:**
 ```bash
-# Logs are aggregated in Grafana
-# Navigate to Explore > Loki data source
-# Query logs using LogQL
+# 1. Recreate infrastructure
+cd terraform/environments/dev
+terraform apply
+
+# 2. Configure kubectl
+aws eks update-kubeconfig --region us-east-1 --name ecommerce-dev
+
+# 3. Run recovery script
+./scripts/recovery-after-destroy.sh
+
+# Takes ~30-40 minutes total
 ```
 
-### Prometheus Metrics
+---
 
+## 🏭 Production Environment
+
+Production environment configured with:
+- **6-12 nodes** (auto-scaling)
+- **t3.medium instances** (vs t3.small in dev)
+- **3 availability zones** (vs 2 in dev)
+- **Multi-AZ NAT gateways** (HA)
+- **Stricter resource limits**
+- **30-day log retention**
+- **Blue/Green deployments**
+
+See comparison: [docs/dev-vs-prod.md](docs/dev-vs-prod.md)
+
+**To deploy production:**
 ```bash
-# Port-forward Prometheus
-kubectl port-forward -n monitoring svc/prometheus 9090:9090
-
-# Access at http://localhost:9090
+cd terraform/environments/prod
+terraform init
+terraform apply
 ```
 
 ---
 
-## 🎯 Demo Scenario
+## 📊 Resources & Costs
 
-This platform demonstrates a complete customer journey:
+### Development Environment (8 nodes)
+| Component | Configuration | Monthly Cost |
+|-----------|---------------|--------------|
+| EKS Control Plane | 1 cluster | $73 |
+| EC2 Nodes | 8x t3.small | $240 |
+| NAT Gateway | 1 gateway | $32 |
+| EBS Storage | ~30GB | $3 |
+| Data Transfer | Variable | ~$10 |
+| **Total** | | **~$358/month** |
 
-1. **User Registration** → User Service
-2. **Browse Products** → Product Service
-3. **Create Order** → Order Service
-4. **Process Payment** → Payment Service
-5. **Monitor Transaction** → Observability Stack (Prometheus/Grafana)
-6. **View Logs** → Loki logs aggregation
+### Production Environment (6-12 nodes)
+| Component | Configuration | Monthly Cost |
+|-----------|---------------|--------------|
+| EKS Control Plane | 1 cluster | $73 |
+| EC2 Nodes | 6x t3.medium | $240 |
+| NAT Gateways | 3 gateways (HA) | $96 |
+| Load Balancers | 2 ALBs | $40 |
+| EBS Storage | ~50GB | $5 |
+| Backups | Daily snapshots | $50 |
+| Data Transfer | Variable | ~$20 |
+| **Total** | | **~$524/month** |
 
-**Example Flow:**
+**Cost Optimization Tips:**
+- Use `terraform destroy` when not in use
+- Scale nodes to 0 during off-hours
+- Use spot instances (70% savings)
+- Set up auto-shutdown schedules
+
+---
+
+## 🔍 Monitoring & Observability
+
+### Access Dashboards
+```bash
+# Grafana (Metrics & Logs)
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80
+# http://localhost:3000 (admin/admin123)
+
+# Prometheus (Raw Metrics)
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090
+# http://localhost:9090
+
+# Loki (Log Queries)
+kubectl port-forward -n monitoring svc/loki-gateway 3100:80
+# http://localhost:3100
 ```
-Customer registers (User Service)
-         ↓
-      Browse products (Product Service)
-         ↓
-      Add to cart & checkout
-         ↓
-      Create order (Order Service)
-         ↓
-      Process payment (Payment Service)
-         ↓
-      Confirm order & send notification
-         ↓
-      Monitor via Grafana dashboard
-```
 
----
+### Key Metrics
 
-## 📚 Development Phases
-
-- **Phase 0:** Project setup & repository initialization
-- **Phase 1:** Infrastructure provisioning (Terraform + VPC + EKS)
-- **Phase 2:** Microservices scaffolding & Docker containerization
-- **Phase 3:** Kubernetes deployments & services
-- **Phase 4:** Observability stack (Prometheus, Grafana, Loki)
-- **Phase 5:** CI/CD pipeline (GitHub Actions)
-- **Phase 6:** Security hardening & RBAC
-- **Phase 7:** Production deployment & optimization
-
----
-
-## 🔐 Security Considerations
-
-- IAM roles with least privilege access
-- Network segmentation (public/private subnets)
-- Service-to-service authentication (mTLS - future)
-- Secrets management (AWS Secrets Manager - future)
-- Pod security policies & RBAC
-- Container image scanning via ECR
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 📧 Contact
-
-For questions or feedback, reach out to:
-- **GitHub:** [@AhmadShaaban1](https://github.com/AhmadShaaban1)
-- **Email:** ahmedshaaban2807@gmail.com
-
----
-
-## 🙏 Acknowledgments
-
-- AWS documentation and best practices
-- Kubernetes community resources
-- Terraform Registry modules
-- Open-source tools (Prometheus, Grafana, Loki)
+**Application Metrics:**
+- HTTP request rate: `rate(http_requests_total[5m])`
+- 95th percentile latency: `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`
