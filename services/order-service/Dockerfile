@@ -2,7 +2,7 @@
 FROM node:18-alpine AS dependencies
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production && \
+RUN npm install --only=production && \
     npm cache clean --force
 
 # Build stage

@@ -25,14 +25,14 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-# VPC Module - Production Configuration
+# VPC Module - Production with 3 AZs
 module "vpc" {
   source = "../../modules/vpc"
 
   project_name         = var.project_name
   environment          = var.environment
-  vpc_cidr             = "10.1.0.0/16"  # Different CIDR from dev
-  availability_zones   = slice(data.aws_availability_zones.available.names, 0, 3)  # 3 AZs for prod
+  vpc_cidr             = "10.1.0.0/16"
+  availability_zones   = slice(data.aws_availability_zones.available.names, 0, 3)
   public_subnet_cidrs  = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
   private_subnet_cidrs = ["10.1.10.0/24", "10.1.20.0/24", "10.1.30.0/24"]
   enable_nat_gateway   = true
@@ -47,7 +47,7 @@ module "security" {
   environment  = var.environment
 }
 
-# EKS Module - Production Configuration
+# EKS Module - Production with m6i.large
 module "eks" {
   source = "../../modules/eks"
 
@@ -61,10 +61,10 @@ module "eks" {
   
   kubernetes_version   = "1.34"
   
-  # Production node configuration
-  node_instance_types  = ["t3.small"]  # Larger instances for prod
-  node_desired_size    = 12              # More nodes for production
-  node_min_size        = 6
-  node_max_size        = 15
-  node_disk_size       = 20           # More disk space
+  # PRODUCTION: m6i.large for better performance and stability
+  node_instance_types  = ["m6i.large"]  # 2 vCPU, 8GB RAM, better network
+  node_desired_size    = 6
+  node_min_size        = 4
+  node_max_size        = 10
+  node_disk_size       = 50  # More storage for production
 }

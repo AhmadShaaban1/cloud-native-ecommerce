@@ -48,7 +48,7 @@ echo ""
 echo "📊 Step 4: Installing Prometheus + Grafana..."
 helm install prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
-  --values ../k8s/monitoring/prometheus-optimized.yaml \
+  --values k8s/monitoring/prometheus-optimized.yaml \
   --timeout 15m
 
 echo "⏳ Waiting for Prometheus (60s)..."
@@ -58,7 +58,7 @@ echo ""
 echo "📝 Step 5: Installing Loki..."
 helm install loki grafana/loki \
   --namespace monitoring \
-  --values ../k8s/monitoring/loki-minimal.yaml \
+  --values k8s/monitoring/loki-minimal.yaml \
   --set deploymentMode=SingleBinary \
   --set singleBinary.replicas=1 \
   --set monitoring.lokiCanary.enabled=false \
@@ -79,7 +79,7 @@ echo ""
 echo "📋 Step 6: Installing Promtail..."
 helm install promtail grafana/promtail \
   --namespace monitoring \
-  --values ../k8s/monitoring/promtail-minimal.yaml
+  --values k8s/monitoring/promtail-minimal.yaml
 
 echo "⏳ Waiting for Promtail (30s)..."
 sleep 30

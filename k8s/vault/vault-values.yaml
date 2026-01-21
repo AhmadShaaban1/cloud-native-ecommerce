@@ -1,0 +1,85 @@
+# Vault Server Configuration
+server:
+  # Use integrated storage (Raft)
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      
+      config: |
+        ui = true
+        
+        listener "tcp" {
+          tls_disable = 1
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+        }
+        
+        storage "raft" {
+          path = "/vault/data"
+
+          retry_join {
+            leader_api_addr = "http://vault-0.vault-internal:8200"
+          }
+        }
+        
+        service_registration "kubernetes" {}
+
+  # Resources for t3.medium nodes
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+  # Data persistence
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: ebs-sc
+    accessMode: ReadWriteOnce
+
+  # Audit storage
+  auditStorage:
+    enabled: true
+    size: 5Gi
+    storageClass: ebs-sc
+
+  # Service type
+  service:
+    enabled: true
+    type: ClusterIP
+
+  # Health checks
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 5
+
+# Vault Injector
+injector:
+  enabled: true
+  
+  replicas: 2
+  
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+
+# UI
+ui:
+  enabled: true
+  serviceType: ClusterIP

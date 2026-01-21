@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-
+  
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -21,7 +21,6 @@ provider "aws" {
   }
 }
 
-# Get available AZs
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -37,10 +36,10 @@ module "vpc" {
   public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
   private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
   enable_nat_gateway   = true
-  single_nat_gateway   = true # Single NAT for cost savings
+  single_nat_gateway   = true  # Single NAT for dev (cost saving)
 }
 
-# Security Module (IAM Roles)
+# Security Module
 module "security" {
   source = "../../modules/security"
 
@@ -48,7 +47,7 @@ module "security" {
   environment  = var.environment
 }
 
-# EKS Module - 8x t3.small + NAT
+# EKS Module - UPGRADED for t3.medium
 module "eks" {
   source = "../../modules/eks"
 
@@ -61,12 +60,11 @@ module "eks" {
   node_role_arn      = module.security.eks_node_group_role_arn
   
   kubernetes_version   = "1.34"
-  node_instance_types  = ["t3.small"]
-  node_desired_size    = 8
-  node_min_size        = 4
-  node_max_size        = 10
-  node_disk_size       = 20
   
-  # Add SSH key
-  ssh_key_name = "ecommerce-dev-key"  # Add this line
+  # UPGRADED: t3.medium for better performance
+  node_instance_types  = ["t3.medium"]
+  node_desired_size    = 6
+  node_min_size        = 4
+  node_max_size        = 8
+  node_disk_size       = 30  # More disk space
 }

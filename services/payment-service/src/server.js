@@ -1,77 +1,141 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3004;
-app.listen(PORT);
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// In-memory payment store (for demo - use database in production)
+const payments = new Map();
+
+// Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
+  res.status(200).json({
     status: 'healthy',
     service: 'payment-service',
     timestamp: new Date().toISOString()
   });
 });
 
+// Process payment
+app.post('/api/payments/process', async (req, res) => {
+  try {
+    const { orderId, amount, currency, userId } = req.body;
+
+    // Validate
+    if (!orderId || !amount || !currency) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Simulate payment processing (80% success rate)
+    const success = Math.random() > 0.2;
+
+    const paymentId = uuidv4();
+    const payment = {
+      paymentId,
+      orderId,
+      amount,
+      currency,
+      userId,
+      status: success ? 'success' : 'failed',
+      timestamp: new Date().toISOString(),
+      method: 'credit_card',
+      last4: '4242'
+    };
+
+    payments.set(paymentId, payment);
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (success) {
+      res.status(200).json({
+        message: 'Payment processed successfully',
+        paymentId,
+        status: 'success',
+        transactionId: paymentId
+      });
+    } else {
+      res.status(400).json({
+        message: 'Payment failed',
+        status: 'failed',
+        error: 'Card declined'
+      });
+    }
+  } catch (error) {
+    console.error('Payment processing error:', error);
+    res.status(500).json({ error: 'Payment processing failed' });
+  }
+});
+
+// Get payment status
+app.get('/api/payments/:paymentId', (req, res) => {
+  try {
+    const payment = payments.get(req.params.paymentId);
+    
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    res.status(200).json({ payment });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch payment' });
+  }
+});
+
+// Refund payment
+app.post('/api/payments/:paymentId/refund', async (req, res) => {
+  try {
+    const payment = payments.get(req.params.paymentId);
+    
+    if (!payment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    if (payment.status !== 'success') {
+      return res.status(400).json({ error: 'Can only refund successful payments' });
+    }
+
+    // Simulate refund processing
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    payment.status = 'refunded';
+    payment.refundedAt = new Date().toISOString();
+    payments.set(req.params.paymentId, payment);
+
+    res.status(200).json({
+      message: 'Refund processed successfully',
+      payment
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Refund failed' });
+  }
+});
+
+// List all payments (for testing)
 app.get('/api/payments', (req, res) => {
-  res.json({ 
-    message: 'payment service is running',
-    payments: []
-  });
+  try {
+    const allPayments = Array.from(payments.values())
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      .slice(0, 50);
+
+    res.status(200).json({
+      count: allPayments.length,
+      payments: allPayments
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch payments' });
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ payment Service running on port ${PORT}`);
+  console.log(`✅ Payment Service running on port ${PORT}`);
 });
 
 module.exports = app;
-
-const promClient = require('prom-client');
-
-// Create a Registry to register metrics
-const register = new promClient.Registry();
-
-// Add default metrics (CPU, memory, etc.)
-promClient.collectDefaultMetrics({ register });
-
-// Custom metrics
-const httpRequestDuration = new promClient.Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'Duration of HTTP requests in seconds',
-  labelNames: ['method', 'route', 'status_code'],
-  registers: [register]
-});
-
-const httpRequestTotal = new promClient.Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'route', 'status_code'],
-  registers: [register]
-});
-
-// Middleware to track metrics
-app.use((req, res, next) => {
-  const start = Date.now();
-  
-  res.on('finish', () => {
-    const duration = (Date.now() - start) / 1000;
-    httpRequestDuration.labels(req.method, req.path, res.statusCode).observe(duration);
-    httpRequestTotal.labels(req.method, req.path, res.statusCode).inc();
-  });
-  
-  next();
-});
-
-// Metrics endpoint
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-});
-
-// test workflow

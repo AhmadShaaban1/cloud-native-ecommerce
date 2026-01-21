@@ -1,4 +1,6 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const axios = require('axios');
 const helmet = require('helmet');
 const cors = require('cors');
 require('dotenv').config();
@@ -10,66 +12,196 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// MongoDB connection
+mongoose.connect(process.env.DB_CONNECTION_STRING || 'mongodb://admin:password123@mongodb:27017/orders?authSource=admin', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('✅ Connected to MongoDB');
+}).catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
+// Order Schema
+const orderSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  userName: { type: String, required: true },
+  items: [{
+    productId: String,
+    productName: String,
+    quantity: Number,
+    price: Number
+  }],
+  totalAmount: { type: Number, required: true },
+  status: { 
+    type: String, 
+    enum: ['pending', 'processing', 'completed', 'cancelled'],
+    default: 'pending'
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed'],
+    default: 'pending'
+  },
+  paymentId: String,
+  shippingAddress: {
+    street: String,
+    city: String,
+    state: String,
+    zipCode: String,
+    country: String
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+// Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
+  res.status(200).json({
     status: 'healthy',
     service: 'order-service',
     timestamp: new Date().toISOString()
   });
 });
 
-app.get('/api/orders', (req, res) => {
-  res.json({ 
-    message: 'order service is running',
-    orders: []
-  });
+// Create order
+app.post('/api/orders', async (req, res) => {
+  try {
+    const { userId, userName, items, shippingAddress } = req.body;
+
+    // Validate required fields
+    if (!userId || !userName || !items || items.length === 0) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Calculate total
+    const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Create order
+    const order = new Order({
+      userId,
+      userName,
+      items,
+      totalAmount,
+      shippingAddress,
+      status: 'pending',
+      paymentStatus: 'pending'
+    });
+
+    await order.save();
+
+    // Initiate payment (call payment service)
+    try {
+      const paymentResponse = await axios.post('http://payment-service:3004/api/payments/process', {
+        orderId: order._id,
+        amount: totalAmount,
+        currency: 'USD',
+        userId: userId
+      });
+
+      if (paymentResponse.data.status === 'success') {
+        order.paymentStatus = 'paid';
+        order.paymentId = paymentResponse.data.paymentId;
+        order.status = 'processing';
+        await order.save();
+      }
+    } catch (paymentError) {
+      console.error('Payment service error:', paymentError.message);
+      order.paymentStatus = 'failed';
+      order.status = 'cancelled';
+      await order.save();
+    }
+
+    res.status(201).json({
+      message: 'Order created successfully',
+      order
+    });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+// Get user orders
+app.get('/api/orders/user/:userId', async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      count: orders.length,
+      orders
+    });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+// Get single order
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    res.status(200).json({ order });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch order' });
+  }
+});
+
+// Update order status
+app.patch('/api/orders/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    order.status = status;
+    order.updatedAt = Date.now();
+    await order.save();
+
+    res.status(200).json({
+      message: 'Order status updated',
+      order
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update order' });
+  }
+});
+
+// Get all orders (admin)
+app.get('/api/orders', async (req, res) => {
+  try {
+    const { status } = req.query;
+    let query = {};
+    
+    if (status) {
+      query.status = status;
+    }
+
+    const orders = await Order.find(query).sort({ createdAt: -1 }).limit(50);
+    
+    res.status(200).json({
+      count: orders.length,
+      orders
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ order Service running on port ${PORT}`);
+  console.log(`✅ Order Service running on port ${PORT}`);
 });
 
 module.exports = app;
-
-const promClient = require('prom-client');
-
-// Create a Registry to register metrics
-const register = new promClient.Registry();
-
-// Add default metrics (CPU, memory, etc.)
-promClient.collectDefaultMetrics({ register });
-
-// Custom metrics
-const httpRequestDuration = new promClient.Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'Duration of HTTP requests in seconds',
-  labelNames: ['method', 'route', 'status_code'],
-  registers: [register]
-});
-
-const httpRequestTotal = new promClient.Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'route', 'status_code'],
-  registers: [register]
-});
-
-// Middleware to track metrics
-app.use((req, res, next) => {
-  const start = Date.now();
-  
-  res.on('finish', () => {
-    const duration = (Date.now() - start) / 1000;
-    httpRequestDuration.labels(req.method, req.path, res.statusCode).observe(duration);
-    httpRequestTotal.labels(req.method, req.path, res.statusCode).inc();
-  });
-  
-  next();
-});
-
-// Metrics endpoint
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(await register.metrics());
-});
-// test workflow
