@@ -1,0 +1,387 @@
+name: Backend Services CI/CD
+
+on:
+  push:
+    branches: [main, dev, staging]
+    paths:
+      - 'services/**'
+      - '.github/workflows/backend-services-cicd.yaml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/**'
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: '18'
+  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+jobs:
+  # Job 1: Code Quality & Testing
+  quality-gate:
+    name: Code Quality & Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [user-service, product-service, order-service, payment-service]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better caching
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
+    - name: Cache node_modules
+      uses: actions/cache@v3
+      with:
+        path: services/${{ matrix.service }}/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles(format('services/{0}/package-lock.json', matrix.service)) }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Install dependencies
+      working-directory: services/${{ matrix.service }}
+      run: npm ci
+
+    - name: Run linter
+      working-directory: services/${{ matrix.service }}
+      run: npm run lint || echo "No lint script found"
+      continue-on-error: true
+
+    - name: Run tests
+      working-directory: services/${{ matrix.service }}
+      run: npm test
+      continue-on-error: false
+
+    - name: Generate coverage report
+      working-directory: services/${{ matrix.service }}
+      run: npm run test:coverage || echo "No coverage script"
+      continue-on-error: true
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: services/${{ matrix.service }}/coverage/lcov.info
+        flags: ${{ matrix.service }}
+        name: ${{ matrix.service }}
+        fail_ci_if_error: false
+
+  # Job 2: Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    strategy:
+      matrix:
+        service: [user-service, product-service, order-service, payment-service]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run npm audit
+      working-directory: services/${{ matrix.service }}
+      run: |
+        npm audit --audit-level=moderate --production || true
+        npm audit --json > audit-report.json
+      continue-on-error: true
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: services/${{ matrix.service }}
+        format: 'sarif'
+        output: 'trivy-results-${{ matrix.service }}.sarif'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+        category: ${{ matrix.service }}
+
+  # Job 3: Build & Push Docker Images
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    needs: [quality-gate, security-scan]
+    if: github.event_name == 'push'
+    strategy:
+      matrix:
+        service: [user-service, product-service, order-service, payment-service]
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/ecommerce-${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: services/${{ matrix.service }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          NODE_VERSION=${{ env.NODE_VERSION }}
+          BUILD_DATE=${{ github.event.head_commit.timestamp }}
+          VCS_REF=${{ github.sha }}
+
+    - name: Scan Docker image with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/ecommerce-${{ matrix.service }}:${{ github.sha }}
+        format: 'table'
+        exit-code: '0'
+        severity: 'CRITICAL,HIGH'
+
+  # Job 4: Deploy to Development
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/dev'
+    environment:
+      name: development
+      url: https://dev.your-domain.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ecommerce-dev
+
+    - name: Deploy services
+      run: |
+        for service in user-service product-service order-service payment-service; do
+          kubectl set image deployment/${service} \
+            ${service}=${{ env.REGISTRY }}/ecommerce-${service}:${{ github.sha }} \
+            -n default
+          
+          kubectl rollout status deployment/${service} \
+            -n default \
+            --timeout=5m
+        done
+
+    - name: Run smoke tests
+      run: |
+        chmod +x .github/scripts/smoke-tests.sh
+        .github/scripts/smoke-tests.sh dev
+
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        for service in user-service product-service order-service payment-service; do
+          kubectl rollout undo deployment/${service} -n default
+        done
+
+  # Job 5: Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/staging'
+    environment:
+      name: staging
+      url: https://staging.your-domain.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ecommerce-staging
+
+    - name: Deploy with canary strategy
+      run: |
+        for service in user-service product-service order-service payment-service; do
+          # Deploy canary (10% traffic)
+          kubectl set image deployment/${service}-canary \
+            ${service}=${{ env.REGISTRY }}/ecommerce-${service}:${{ github.sha }} \
+            -n default || true
+          
+          # Wait and monitor
+          sleep 60
+          
+          # If healthy, promote to main
+          kubectl set image deployment/${service} \
+            ${service}=${{ env.REGISTRY }}/ecommerce-${service}:${{ github.sha }} \
+            -n default
+          
+          kubectl rollout status deployment/${service} \
+            -n default \
+            --timeout=5m
+        done
+
+    - name: Run smoke tests
+      run: |
+        chmod +x .github/scripts/smoke-tests.sh
+        .github/scripts/smoke-tests.sh staging
+
+  # Job 6: Deploy to Production (with approval)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://your-domain.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig \
+          --region ${{ env.AWS_REGION }} \
+          --name ecommerce-prod
+
+    - name: Create deployment snapshot
+      run: |
+        kubectl get deployments -n default -o yaml > pre-deployment-snapshot.yaml
+
+    - name: Deploy services (blue-green)
+      run: |
+        for service in user-service product-service order-service payment-service; do
+          # Update green deployment
+          kubectl set image deployment/${service}-green \
+            ${service}=${{ env.REGISTRY }}/ecommerce-${service}:${{ github.sha }} \
+            -n default
+          
+          kubectl rollout status deployment/${service}-green \
+            -n default \
+            --timeout=5m
+          
+          # Switch traffic to green
+          kubectl patch service ${service} \
+            -n default \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+          
+          # Wait for verification
+          sleep 30
+        done
+
+    - name: Run smoke tests
+      run: |
+        chmod +x .github/scripts/smoke-tests.sh
+        .github/scripts/smoke-tests.sh production
+
+    - name: Rollback on failure
+      if: failure()
+      run: |
+        for service in user-service product-service order-service payment-service; do
+          # Switch traffic back to blue
+          kubectl patch service ${service} \
+            -n default \
+            -p '{"spec":{"selector":{"version":"blue"}}}'
+        done
+
+    - name: Promote green to blue
+      if: success()
+      run: |
+        for service in user-service product-service order-service payment-service; do
+          # Update blue to match green
+          kubectl set image deployment/${service}-blue \
+            ${service}=${{ env.REGISTRY }}/ecommerce-${service}:${{ github.sha }} \
+            -n default
+        done
+
+  # Job 7: Notify on completion
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy-dev, deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: Send Slack notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: |
+          Deployment ${{ job.status }}!
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+          Branch: ${{ github.ref }}
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      if: always()
+
+    - name: Create GitHub deployment status
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: context.payload.deployment.id,
+            state: '${{ job.status }}',
+            description: 'Deployment completed',
+            environment_url: 'https://your-domain.com'
+          })
+      if: always()

@@ -8,28 +8,64 @@ echo "🚀 FINAL DEPLOYMENT - COMPLETE PLATFORM"
 echo "=========================================="
 echo ""
 
+REGION="us-east-1"
+CLUSTER_NAME="ecommerce-dev"
+
+echo "🔹 Updating kubeconfig..."
+aws eks update-kubeconfig --region $REGION --name $CLUSTER_NAME
+echo "🔹 Waiting for nodes to be Ready..."
+kubectl wait --for=condition=Ready node --all --timeout=300s
+
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+POLICY_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:policy/ebs-csi-policy"
+
+# aws eks describe-cluster \
+#   --name ecommerce-dev \
+#   --query "cluster.identity.oidc.issuer" \
+#   --output text
+
+# verify if ebs-csi-controller is installed
+echo "🔹 Checking for EBS CSI Driver..."
+if ! kubectl get deployment ebs-csi-controller -n kube-system >/dev/null 2>&1; then
+  echo "➕ Installing EBS CSI Driver"
+  helm upgrade --install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
+  --namespace kube-system \
+  --set controller.serviceAccount.create=true \
+  --set controller.serviceAccount.name=ebs-csi-controller-sa
+fi
+
+echo "🔹 Verifying StorageClass..."
+if ! kubectl get storageclass ebs-sc >/dev/null 2>&1; then
+  echo "➕ Applying StorageClass"
+  kubectl apply -f ../k8s/storage/storage-class.yaml
+fi
+
 # Step 1: Build and push all images
 echo "📦 Step 1: Building and pushing Docker images..."
-./scripts/build-and-push.sh
+./build-and-push.sh
 
 # Step 2: Deploy complete stack
 echo ""
 echo "🏗️ Step 2: Deploying complete stack..."
-./scripts/deploy-complete-stack.sh
+./deploy-complete-stack.sh
 
-# Step 3: Setup Vault
+step 3: Setup autoscaling
 echo ""
-echo "🔐 Step 3: Setting up Vault..."
-./scripts/vault-setup.sh
+echo "📈 Step 3: Setting up autoscaling..."
+./setup-autoscaling-complete.sh
 
-# Step 4: Seed sample data
+# Step 4: Setup Vault
 echo ""
-echo "🌱 Step 4: Seeding sample data..."
+echo "🔐 Step 4: Setting up Vault..."
+./vault-setup.sh
+
+# Step 5: Seed sample data
+echo ""
+echo "🌱 Step 5: Seeding sample data..."
 echo "Waiting for services to be ready..."
 sleep 30
 
-kubectl run seed --rm -it --image=curlimages/curl --restart=Never -- \
-  curl -X POST http://product-service:3002/api/products/seed
+kubectl exec -it product-service-5b6f4595ff-vsnhp -- curl -X POST http://product-service:3002/api/products/seed
 
 echo "✅ Sample products seeded"
 
@@ -40,8 +76,8 @@ echo "✅ DEPLOYMENT COMPLETE!"
 echo "=========================================="
 echo ""
 
-# Get Istio Ingress Gateway URL
-GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+# # Get Istio Ingress Gateway URL
+# GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 
 echo "🌐 Access URLs:"
 echo ""

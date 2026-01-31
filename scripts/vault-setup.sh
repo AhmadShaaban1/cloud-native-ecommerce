@@ -134,11 +134,9 @@ echo ""
 echo "📋 Creating policies..."
 
 # Create policy
-kubectl exec -n vault vault-0 -- vault policy write ecommerce-policy - <<EOF
-path "secret/data/ecommerce/*" {
+echo 'path "secret/data/ecommerce/*" {
   capabilities = ["read", "list"]
-}
-EOF
+} ' | kubectl exec -i -n vault vault-0 -- vault policy write ecommerce-policy -
 
 # Create Kubernetes role
 kubectl exec -n vault vault-0 -- vault write auth/kubernetes/role/ecommerce \

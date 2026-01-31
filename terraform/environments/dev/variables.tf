@@ -15,3 +15,8 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+variable "karpenter_version" {
+  description = "Karpenter version to deploy"
+  type        = string
+  default     = "v0.33.0"
+}

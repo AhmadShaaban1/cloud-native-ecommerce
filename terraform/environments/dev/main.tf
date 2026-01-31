@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -20,6 +24,7 @@ provider "aws" {
     }
   }
 }
+
 
 data "aws_availability_zones" "available" {
   state = "available"
@@ -53,11 +58,13 @@ module "eks" {
 
   project_name       = var.project_name
   environment        = var.environment
+  cluster_name       = "${var.project_name}-${var.environment}"
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
   public_subnet_ids  = module.vpc.public_subnet_ids
   cluster_role_arn   = module.security.eks_cluster_role_arn
   node_role_arn      = module.security.eks_node_group_role_arn
+
   
   kubernetes_version   = "1.34"
   

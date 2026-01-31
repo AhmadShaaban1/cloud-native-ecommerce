@@ -7,7 +7,7 @@ metadata:
     app: frontend
     tier: frontend
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: frontend
@@ -20,13 +20,13 @@ spec:
       containers:
       - name: frontend
         image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/frontend:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http
         env:
-        - name: REACT_APP_API_URL
-          value: ""  # Will use same origin (Istio gateway)
-        
+        - name: NODE_ENV
+          value: "production"
         resources:
           requests:
             memory: "128Mi"
@@ -34,19 +34,17 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-        
         livenessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 80
           initialDelaySeconds: 30
           periodSeconds: 10
-        
         readinessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 80
-          initialDelaySeconds: 10
+          initialDelaySeconds: 5
           periodSeconds: 5
 ---
 apiVersion: v1

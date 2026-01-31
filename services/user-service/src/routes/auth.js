@@ -39,4 +39,29 @@ router.post("/login", (req, res) => {
   res.json({ token });
 });
 
+router.get('/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'dev-secret'
+    );
+
+    res.json({
+      email: decoded.email,
+      role: 'user'
+    });
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+
 module.exports = router;

@@ -48,19 +48,19 @@ variable "node_instance_types" {
 variable "node_desired_size" {
   description = "Desired number of nodes"
   type        = number
-  default     = 4
+  default     = 6
 }
 
 variable "node_min_size" {
   description = "Minimum number of nodes"
   type        = number
-  default     = 3
+  default     = 4
 }
 
 variable "node_max_size" {
   description = "Maximum number of nodes"
   type        = number
-  default     = 6
+  default     = 15
 }
 
 variable "node_disk_size" {
@@ -73,4 +73,26 @@ variable "ssh_key_name" {
   description = "SSH key name for node access"
   type        = string
   default     = null
+}
+
+variable "enable_karpenter" {
+  description = "Enable Karpenter for cluster autoscaling"
+  type        = bool
+  default     = true
+}
+
+variable "karpenter_version" {
+  description = "Version of Karpenter to install"
+  type        = string
+  default     = "v0.33.0"
+}
+
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+}
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
 }

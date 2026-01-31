@@ -22,10 +22,14 @@ resource "aws_security_group" "eks_cluster" {
     description = "Allow HTTPS from nodes"
   }
 
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-eks-cluster-sg"
-    Environment = var.environment
-  }
+  tags = merge(
+    var.tags,
+    {
+      "Name"                   = "${var.project_name}-${var.environment}-eks-cluster-sg"
+      "karpenter.sh/discovery" = var.cluster_name
+      "Environment"            = var.environment
+    }
+  )
 }
 
 # Security Group for EKS Nodes
@@ -70,11 +74,15 @@ resource "aws_security_group" "eks_nodes" {
     description     = "Allow HTTPS from control plane"
   }
 
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-eks-nodes-sg"
-    Environment = var.environment
-    "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "owned"
-  }
+  tags = merge(
+    var.tags,
+    {
+      "Name"                   = "${var.project_name}-${var.environment}-eks-nodes-sg"
+      "karpenter.sh/discovery" = aws_eks_cluster.main.name
+      "Environment"            = var.environment
+      "kubernetes.io/cluster/${var.project_name}-${var.environment}" = "owned"
+    }
+  )
 }
 
 # EKS Cluster
@@ -102,14 +110,12 @@ resource "aws_eks_cluster" "main" {
   ]
 }
 
-# EKS Node Group
+
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "${var.project_name}-${var.environment}-node-group"
+  node_group_name = "main"
   node_role_arn   = var.node_role_arn
   subnet_ids      = var.private_subnet_ids
-  instance_types  = var.node_instance_types
-  disk_size       = var.node_disk_size
 
   scaling_config {
     desired_size = var.node_desired_size
@@ -117,34 +123,66 @@ resource "aws_eks_node_group" "main" {
     min_size     = var.node_min_size
   }
 
-  update_config {
-    max_unavailable = 1
-  }
+  instance_types = var.node_instance_types
 
-# Add SSH access if key is provided
-  dynamic "remote_access" {
-    for_each = var.ssh_key_name != null ? [1] : []
-    content {
-      ec2_ssh_key               = var.ssh_key_name
-      source_security_group_ids = [aws_security_group.eks_nodes.id]
+  # Add tags for Karpenter discovery
+  tags = merge(
+    var.tags,
+    {
+      "karpenter.sh/discovery" = aws_eks_cluster.main.name
+      "Name"                   = "${var.project_name}-${var.environment}-node"
     }
-  }
+  )
 
-  labels = {
-    Environment = var.environment
-    NodeGroup   = "main"
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
   }
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-node-group"
-    Environment = var.environment
-  }
-
-  depends_on = [
-    aws_eks_cluster.main,
-    aws_security_group.eks_nodes
-  ]
 }
+
+# # EKS Node Group
+# resource "aws_eks_node_group" "main" {
+#   cluster_name    = aws_eks_cluster.main.name
+#   node_group_name = "${var.project_name}-${var.environment}-node-group"
+#   node_role_arn   = var.node_role_arn
+#   subnet_ids      = var.private_subnet_ids
+#   instance_types  = var.node_instance_types
+#   disk_size       = var.node_disk_size
+
+#   scaling_config {
+#     desired_size = var.node_desired_size
+#     max_size     = var.node_max_size
+#     min_size     = var.node_min_size
+#   }
+
+#   update_config {
+#     max_unavailable = 1
+#   }
+  
+
+# # Add SSH access if key is provided
+#   dynamic "remote_access" {
+#     for_each = var.ssh_key_name != null ? [1] : []
+#     content {
+#       ec2_ssh_key               = var.ssh_key_name
+#       source_security_group_ids = [aws_security_group.eks_nodes.id]
+#     }
+#   }
+
+#   labels = {
+#     Environment = var.environment
+#     NodeGroup   = "main"
+#   }
+
+#   tags = {
+#     Name        = "${var.project_name}-${var.environment}-node-group"
+#     Environment = var.environment
+#   }
+
+#   depends_on = [
+#     aws_eks_cluster.main,
+#     aws_security_group.eks_nodes
+#   ]
+# }
 
 # OIDC Provider for IRSA (IAM Roles for Service Accounts)
 data "tls_certificate" "eks" {
@@ -156,8 +194,21 @@ resource "aws_iam_openid_connect_provider" "eks" {
   thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
   url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
 
+
   tags = {
     Name        = "${var.project_name}-${var.environment}-eks-oidc"
     Environment = var.environment
   }
+}
+
+# Tag private subnets for Karpenter discovery
+resource "aws_ec2_tag" "private_subnet_cluster_tag" {
+  for_each = {
+    for idx, subnet_id in var.private_subnet_ids :
+    idx => subnet_id
+  }
+
+  resource_id = each.value
+  key         = "karpenter.sh/discovery"
+  value       = var.cluster_name
 }

@@ -1,0 +1,65 @@
+# Test deployment to trigger Karpenter node scaling
+# This creates pods with high resource requests to force new nodes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inflate
+  namespace: default
+  labels:
+    app: inflate
+    purpose: testing
+spec:
+  replicas: 0  # Start with 0, scale manually
+  selector:
+    matchLabels:
+      app: inflate
+  template:
+    metadata:
+      labels:
+        app: inflate
+        purpose: testing
+    spec:
+      containers:
+      - name: inflate
+        image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
+        resources:
+          requests:
+            cpu: 1000m      # Request 1 CPU
+            memory: 1Gi     # Request 1GB memory
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+      # Prefer nodes managed by Karpenter
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: managed-by
+                operator: In
+                values:
+                - karpenter
+
+---
+# Instructions for using this test deployment
+# 
+# 1. To trigger node scaling up:
+#    kubectl scale deployment inflate --replicas=10
+#
+# 2. Watch Karpenter create nodes:
+#    kubectl logs -f -n karpenter -l app.kubernetes.io/name=karpenter
+#
+# 3. Watch nodes being added:
+#    kubectl get nodes --watch
+#
+# 4. Check pod distribution:
+#    kubectl get pods -o wide
+#
+# 5. To trigger scaling down:
+#    kubectl scale deployment inflate --replicas=0
+#
+# 6. Watch Karpenter remove unused nodes:
+#    kubectl get nodes --watch
+#
+# 7. Clean up when done:
+#    kubectl delete deployment inflate

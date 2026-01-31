@@ -1,0 +1,27 @@
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  amiFamily: AL2
+
+  # REQUIRED in v1
+  amiSelectorTerms:
+    - alias: al2@latest
+
+  role: KarpenterNodeRole-ecommerce-dev
+
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ecommerce-dev
+
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: ecommerce-dev
+
+  tags:
+    Name: karpenter-node-ecommerce-dev
+    Environment: dev
+    Project: ecommerce
+    ManagedBy: karpenter
+    karpenter.sh/discovery: ecommerce-dev

@@ -1,0 +1,9 @@
+settings:
+  clusterName: ecommerce-dev
+  clusterEndpoint: https://64B10638953174359448B9B47179B859.gr7.us-east-1.eks.amazonaws.com
+
+serviceAccount:
+  name: karpenter
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::815662139594:role/karpenter-controller-ecommerce-dev

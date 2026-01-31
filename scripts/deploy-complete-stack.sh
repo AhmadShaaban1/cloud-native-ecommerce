@@ -33,19 +33,23 @@ echo ""
 
 # Step 1: Deploy base applications
 echo "📦 Step 1/7: Deploying base applications..."
-kubectl apply -f k8s/base/deployments/mongodb.yaml
-kubectl apply -f k8s/base/deployments/redis.yaml
+kubectl apply -f ../k8s/base/deployments/mongodb.yaml
+kubectl apply -f ../k8s/base/deployments/redis.yaml
 
 echo "⏳ Waiting for databases..."
 kubectl wait --for=condition=ready pod -l app=mongodb --timeout=120s
 kubectl wait --for=condition=ready pod -l app=redis --timeout=120s
 
-kubectl apply -f k8s/base/deployments/user-service.yaml
-kubectl apply -f k8s/base/deployments/product-service.yaml
-kubectl apply -f k8s/base/deployments/order-service.yaml
-kubectl apply -f k8s/base/deployments/payment-service.yaml
+kubectl apply -f ../k8s/base/deployments/product-service.yaml
+kubectl apply -f ../k8s/base/deployments/user-service.yaml
+kubectl apply -f ../k8s/base/deployments/order-service.yaml
+kubectl apply -f ../k8s/base/deployments/payment-service.yaml
+kubectl apply -f ../k8s/base/deployments/frontend.yaml
+kubectl apply -f ../k8s/base/deployments/seed-sample.yaml
 
-echo "⏳ Waiting for services..."
+
+
+echo "⏳ Waiting for deployments..."
 sleep 30
 
 # Step 2: Install HashiCorp Vault
@@ -58,8 +62,9 @@ helm repo update
 helm upgrade --install vault hashicorp/vault \
   --namespace vault \
   --create-namespace \
-  --values k8s/vault/vault-values.yaml \
+  --values ../k8s/vault/vault-values.yaml \
   --wait
+kubectl delete pod -l app.kubernetes.io/name=vault -n vault --ignore-not-found
 
 echo "⏳ Waiting for Vault pods..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault -n vault --timeout=300s
@@ -70,37 +75,35 @@ echo "   See docs/vault-setup.md for instructions"
 echo ""
 
 # Step 3: Install Istio
-echo "🌐 Step 3/7: Installing Istio Service Mesh..."
+# echo "🌐 Step 3/7: Installing Istio Service Mesh..."
 
-if ! command -v istioctl &> /dev/null; then
-    echo "📥 Downloading Istio..."
-    curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.20.1 sh -
-    cd istio-1.20.1
-    export PATH=$PWD/bin:$PATH
-    cd ..
-fi
+# export PATH="$(pwd)/../k8s/istio-1.20.1/bin:$PATH"
+# if ! command -v istioctl &> /dev/null; then
+#     echo "❌ istioctl not found. Make sure k8s/istio-1.20.1/bin exists"
+#     exit 1
+# fi
 
-istioctl install --set profile=demo -y
+# istioctl install --set profile=demo -y
 
-echo "⏳ Waiting for Istio..."
-kubectl wait --for=condition=ready pod -l app=istiod -n istio-system --timeout=300s
+# echo "⏳ Waiting for Istio..."
+# kubectl wait --for=condition=ready pod -l app=istiod -n istio-system --timeout=300s
 
-# Enable sidecar injection
-kubectl label namespace default istio-injection=enabled --overwrite
+# # Enable sidecar injection
+# kubectl label namespace default istio-injection=enabled --overwrite
 
-# Apply Istio configs
-kubectl apply -f k8s/istio/gateway.yaml
-kubectl apply -f k8s/istio/destination-rules.yaml
+# # Apply Istio configs
+# kubectl apply -f ../k8s/istio-1.20.1/gateway.yaml
+# kubectl apply -f ../k8s/istio-1.20.1/destination-rules.yaml
 
-echo "✅ Istio installed"
+# echo "✅ Istio installed"
 
-# Step 4: Install Kiali
-echo ""
-echo "📊 Step 4/7: Installing Kiali (Istio Dashboard)..."
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/jaeger.yaml
+# # Step 4: Install Kiali
+# echo ""
+# echo "📊 Step 4/7: Installing Kiali (Istio Dashboard)..."
+# kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
+# kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
+# kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
+# kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/jaeger.yaml
 
 # Step 5: Install ArgoCD
 echo ""
@@ -118,20 +121,20 @@ ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o js
 
 echo "✅ ArgoCD installed"
 echo "   Username: admin"
-echo "   Password: $ARGOCD_PASSWORD"
+echo "   Password: $ARGOCD_PASSWORD" #oD1VVVajoJfHIGBH
 echo "   (Save this password!)"
 
 # Step 6: Deploy monitoring
 echo ""
 echo "📊 Step 6/7: Deploying monitoring stack..."
-./scripts/install-monitoring-final.sh
+# ./install-monitoring-final.sh
 
 # Step 7: Apply security policies
 echo ""
 echo "🔒 Step 7/7: Applying security policies..."
 kubectl label namespace kube-system name=kube-system --overwrite
-kubectl apply -f k8s/security/network-policies.yaml
-kubectl apply -f k8s/security/rbac.yaml
+kubectl apply -f ../k8s/security/network-policies.yaml
+kubectl apply -f ../k8s/security/rbac.yaml
 
 echo ""
 echo "=========================================="
@@ -151,9 +154,9 @@ echo "🔐 Vault Pods:"
 kubectl get pods -n vault
 echo ""
 
-echo "🌐 Istio Pods:"
-kubectl get pods -n istio-system
-echo ""
+# echo "🌐 Istio Pods:"
+# kubectl get pods -n istio-system
+# echo ""
 
 echo "🔄 ArgoCD Pods:"
 kubectl get pods -n argocd
@@ -166,7 +169,7 @@ echo ""
 echo "🌐 Access URLs:"
 echo "   ArgoCD:    kubectl port-forward svc/argocd-server -n argocd 8080:443"
 echo "   Grafana:   kubectl port-forward svc/prometheus-grafana -n monitoring 3000:80"
-echo "   Kiali:     kubectl port-forward svc/kiali -n istio-system 20001:20001"
+# echo "   Kiali:     kubectl port-forward svc/kiali -n istio-system 20001:20001"
 echo "   Vault UI:  kubectl port-forward svc/vault-ui -n vault 8200:8200"
 echo ""
 

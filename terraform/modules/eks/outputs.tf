@@ -33,3 +33,18 @@ output "node_group_id" {
   description = "EKS node group ID"
   value       = aws_eks_node_group.main.id
 }
+
+output "cluster_autoscaling_enabled" {
+  description = "Whether cluster autoscaling is enabled"
+  value       = true
+}
+
+output "node_group_min_size" {
+  description = "Minimum size of the node group"
+  value       = var.node_min_size
+}
+
+output "node_group_max_size" {
+  description = "Maximum size of the node group"
+  value       = var.node_max_size
+}
