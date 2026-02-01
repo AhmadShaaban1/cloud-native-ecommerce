@@ -19,8 +19,16 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/frontend:latest
+        image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/frontend:sha-c45e673
         imagePullPolicy: Always
+<<<<<<< Updated upstream
+=======
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop: ["ALL"]
+>>>>>>> Stashed changes
         ports:
         - containerPort: 80
           name: http

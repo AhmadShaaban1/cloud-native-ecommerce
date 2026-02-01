@@ -34,7 +34,19 @@ spec:
       serviceAccountName: backend-service-account
       containers:
       - name: user-service
+<<<<<<< Updated upstream
         image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/user-service:latest
+=======
+        image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/user-service:sha-c45e673
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+>>>>>>> Stashed changes
         ports:
         - containerPort: 3001
           name: http

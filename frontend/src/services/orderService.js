@@ -3,7 +3,7 @@ import { orderApi } from './api';
 class OrderService {
   async createOrder(orderData) {
     try {
-      const response = await orderApi.post('/api/orders', orderData);
+      const response = await orderApi.post('', orderData);
       return response.data;
     } catch (error) {
       throw error;
@@ -12,7 +12,7 @@ class OrderService {
 
   async getMyOrders() {
     try {
-      const response = await orderApi.get('/api/orders/my-orders');
+      const response = await orderApi.get('/my-orders');
       return response.data;
     } catch (error) {
       throw error;
@@ -21,7 +21,7 @@ class OrderService {
 
   async getOrderById(id) {
     try {
-      const response = await orderApi.get(`/api/orders/${id}`);
+      const response = await orderApi.get(`/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -30,7 +30,7 @@ class OrderService {
 
   async getAllOrders(params = {}) {
     try {
-      const response = await orderApi.get('/api/orders', { params });
+      const response = await orderApi.get('', { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -39,7 +39,7 @@ class OrderService {
 
   async updateOrderStatus(id, status) {
     try {
-      const response = await orderApi.patch(`/api/orders/${id}/status`, {
+      const response = await orderApi.patch(`/${id}/status`, {
         status
       });
       return response.data;
@@ -50,7 +50,7 @@ class OrderService {
 
   async cancelOrder(id) {
     try {
-      const response = await orderApi.patch(`/api/orders/${id}/cancel`);
+      const response = await orderApi.patch(`/${id}/cancel`);
       return response.data;
     } catch (error) {
       throw error;
@@ -59,7 +59,7 @@ class OrderService {
 
   async getOrderStats() {
     try {
-      const response = await orderApi.get('/api/orders/stats');
+      const response = await orderApi.get('/stats');
       return response.data;
     } catch (error) {
       throw error;

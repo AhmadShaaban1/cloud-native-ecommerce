@@ -134,6 +134,57 @@ app.get('/api/payments', (req, res) => {
   }
 });
 
+// Get payment methods
+app.get('/api/payments/methods', (req, res) => {
+  res.status(200).json({
+    methods: [
+      { id: '1', type: 'credit_card', last4: '4242', default: true },
+      { id: '2', type: 'paypal', email: 'user@example.com', default: false }
+    ]
+  });
+});
+
+// Add payment method
+app.post('/api/payments/methods', (req, res) => {
+  const { type, details } = req.body;
+  res.status(201).json({
+    message: 'Payment method added',
+    method: { id: uuidv4(), type, ...details }
+  });
+});
+
+// Delete payment method
+app.delete('/api/payments/methods/:id', (req, res) => {
+  res.status(200).json({
+    message: 'Payment method deleted'
+  });
+});
+
+// Get payment history
+app.get('/api/payments/history', (req, res) => {
+  const allPayments = Array.from(payments.values())
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  res.status(200).json({
+    count: allPayments.length,
+    payments: allPayments
+  });
+});
+
+// Verify payment
+app.get('/api/payments/:paymentId/verify', (req, res) => {
+  const payment = payments.get(req.params.paymentId);
+  
+  if (!payment) {
+    return res.status(404).json({ error: 'Payment not found' });
+  }
+
+  res.status(200).json({
+    verified: payment.status === 'success',
+    payment
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Payment Service running on port ${PORT}`);
 });

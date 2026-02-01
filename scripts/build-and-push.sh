@@ -5,6 +5,7 @@ AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION="us-east-1"
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 PROJECT_NAME="cloud-native-ecommerce"
+GIT_SHA=$(git rev-parse --short HEAD)
 
 # Services to build and push
 SERVICES=("user-service" "product-service" "order-service" "payment-service" "frontend")
@@ -27,15 +28,15 @@ for SERVICE in "${SERVICES[@]}"; do
     fi
     
     # Build image
-    docker build -t $PROJECT_NAME/$SERVICE:latest $CONTEXT
+    docker build -t $PROJECT_NAME/$SERVICE:sha-$GIT_SHA $CONTEXT 
     
     # Tag for ECR
-    docker tag $PROJECT_NAME/$SERVICE:latest \
-        $ECR_REGISTRY/$PROJECT_NAME/$SERVICE:latest
+    docker tag $PROJECT_NAME/$SERVICE:sha-$GIT_SHA \
+        $ECR_REGISTRY/$PROJECT_NAME/$SERVICE:sha-$GIT_SHA
     
     # Push to ECR
     echo "⬆️  Pushing $SERVICE to ECR..."
-    docker push $ECR_REGISTRY/$PROJECT_NAME/$SERVICE:latest
+    docker push $ECR_REGISTRY/$PROJECT_NAME/$SERVICE:sha-$GIT_SHA
     
     echo "✅ $SERVICE pushed successfully!"
 done

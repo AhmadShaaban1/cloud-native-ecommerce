@@ -51,10 +51,12 @@ const ProductCard = ({ product }) => {
     >
       <CardMedia
         component="img"
-        height="200"
-        image={product.image || 'https://via.placeholder.com/300x200?text=Product+Image'}
+        image={product.imageUrl || "https://picsum.photos/400/300"}
         alt={product.name}
-        sx={{ objectFit: 'cover' }}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "https://picsum.photos/400/300";
+        }}
       />
       
       <CardContent sx={{ flexGrow: 1 }}>

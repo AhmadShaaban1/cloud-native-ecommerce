@@ -16,14 +16,22 @@ class AuthService {
   async login(credentials) {
     try {
       const response = await userApi.post('/login', credentials);
-      if (response.data.token) {
-        this.setAuth(response.data);
+
+      if (!response.data?.token) {
+        throw new Error('Invalid login response');
       }
-      return response.data;
+
+      this.setAuth(response.data);  
+      return response.data; // SUCCESS
     } catch (error) {
-      throw error;
+      const message =
+        error.response?.data?.message ||
+        'Invalid email or password';
+
+      throw new Error(message);
     }
   }
+
 
   logout() {
     localStorage.removeItem('token');

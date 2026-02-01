@@ -171,6 +171,138 @@ app.post('/api/products/seed', async (req, res) => {
   }
 });
 
+app.get('/api/products/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q) {
+      return res.status(400).json({ error: 'Search query required' });
+    }
+
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } }
+      ]
+    });
+
+    res.status(200).json({
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+// Get by category
+app.get('/api/products/category', async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    if (!category) {
+      return res.status(400).json({ error: 'Category required' });
+    }
+
+    const products = await Product.find({ category });
+
+    res.status(200).json({
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// Get categories
+app.get('/api/products/categories', async (req, res) => {
+  try {
+    const categories = await Product.distinct('category');
+    res.status(200).json({ categories });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// Get featured products
+app.get('/api/products/featured', async (req, res) => {
+  try {
+    const products = await Product.find({ stock: { $gt: 0 } })
+      .sort({ createdAt: -1 })
+      .limit(8);
+    
+    res.status(200).json({
+      count: products.length,
+      products
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch featured products' });
+  }
+});
+
+// Update stock
+app.patch('/api/products/:id/stock', async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    product.stock = quantity;
+    await product.save();
+
+    res.status(200).json({
+      message: 'Stock updated',
+      product
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update stock' });
+  }
+});
+
+// Update product
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    res.status(200).json({
+      message: 'Product updated',
+      product
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+// Delete product
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    res.status(200).json({
+      message: 'Product deleted'
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Product Service running on port ${PORT}`);
 });

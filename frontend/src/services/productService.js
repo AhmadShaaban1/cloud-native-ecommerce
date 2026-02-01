@@ -3,7 +3,7 @@ import { productApi } from './api';
 class ProductService {
   async getAllProducts(params = {}) {
     try {
-      const response = await productApi.get('/api/products', { params });
+      const response = await productApi.get('', { params });
       return response.data;
     } catch (error) {
       throw error;
@@ -12,7 +12,7 @@ class ProductService {
 
   async getProductById(id) {
     try {
-      const response = await productApi.get(`/api/products/${id}`);
+      const response = await productApi.get(`/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -21,7 +21,7 @@ class ProductService {
 
   async searchProducts(query) {
     try {
-      const response = await productApi.get('/api/products/search', {
+      const response = await productApi.get('/search', {
         params: { q: query }
       });
       return response.data;
@@ -32,7 +32,7 @@ class ProductService {
 
   async getProductsByCategory(category) {
     try {
-      const response = await productApi.get('/api/products/category', {
+      const response = await productApi.get('/category', {
         params: { category }
       });
       return response.data;
@@ -43,7 +43,7 @@ class ProductService {
 
   async createProduct(productData) {
     try {
-      const response = await productApi.post('/api/products', productData);
+      const response = await productApi.post('', productData);
       return response.data;
     } catch (error) {
       throw error;
@@ -52,7 +52,7 @@ class ProductService {
 
   async updateProduct(id, productData) {
     try {
-      const response = await productApi.put(`/api/products/${id}`, productData);
+      const response = await productApi.put(`/${id}`, productData);
       return response.data;
     } catch (error) {
       throw error;
@@ -61,7 +61,7 @@ class ProductService {
 
   async deleteProduct(id) {
     try {
-      const response = await productApi.delete(`/api/products/${id}`);
+      const response = await productApi.delete(`/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -70,7 +70,7 @@ class ProductService {
 
   async updateStock(id, quantity) {
     try {
-      const response = await productApi.patch(`/api/products/${id}/stock`, {
+      const response = await productApi.patch(`/${id}/stock`, {
         quantity
       });
       return response.data;
@@ -81,7 +81,7 @@ class ProductService {
 
   async getCategories() {
     try {
-      const response = await productApi.get('/api/products/categories');
+      const response = await productApi.get('/categories');
       return response.data;
     } catch (error) {
       throw error;
@@ -90,7 +90,7 @@ class ProductService {
 
   async getFeaturedProducts() {
     try {
-      const response = await productApi.get('/api/products/featured');
+      const response = await productApi.get('/featured');
       return response.data;
     } catch (error) {
       throw error;

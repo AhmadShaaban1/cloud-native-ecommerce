@@ -16,6 +16,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const setToken = (token) => {
+    authService.getToken(token);
+    localStorage.setItem('token', token);
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (token && user) {
+      setToken(token);
+      setUser(JSON.parse(user));
+    }
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {

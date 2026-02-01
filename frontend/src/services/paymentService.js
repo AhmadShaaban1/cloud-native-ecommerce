@@ -3,7 +3,7 @@ import { paymentApi } from './api';
 class PaymentService {
   async processPayment(paymentData) {
     try {
-      const response = await paymentApi.post('/api/payments/process', paymentData);
+      const response = await paymentApi.post('/process', paymentData);
       return response.data;
     } catch (error) {
       throw error;
@@ -12,7 +12,7 @@ class PaymentService {
 
   async getPaymentMethods() {
     try {
-      const response = await paymentApi.get('/api/payments/methods');
+      const response = await paymentApi.get('/methods');
       return response.data;
     } catch (error) {
       throw error;
@@ -21,7 +21,7 @@ class PaymentService {
 
   async addPaymentMethod(methodData) {
     try {
-      const response = await paymentApi.post('/api/payments/methods', methodData);
+      const response = await paymentApi.post('/methods', methodData);
       return response.data;
     } catch (error) {
       throw error;
@@ -30,7 +30,7 @@ class PaymentService {
 
   async deletePaymentMethod(id) {
     try {
-      const response = await paymentApi.delete(`/api/payments/methods/${id}`);
+      const response = await paymentApi.delete(`/methods/${id}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -39,7 +39,7 @@ class PaymentService {
 
   async getPaymentHistory() {
     try {
-      const response = await paymentApi.get('/api/payments/history');
+      const response = await paymentApi.get('/history');
       return response.data;
     } catch (error) {
       throw error;
@@ -48,7 +48,7 @@ class PaymentService {
 
   async refundPayment(paymentId, amount) {
     try {
-      const response = await paymentApi.post(`/api/payments/${paymentId}/refund`, {
+      const response = await paymentApi.post(`/${paymentId}/refund`, {
         amount
       });
       return response.data;
@@ -59,7 +59,7 @@ class PaymentService {
 
   async verifyPayment(paymentId) {
     try {
-      const response = await paymentApi.get(`/api/payments/${paymentId}/verify`);
+      const response = await paymentApi.get(`/${paymentId}/verify`);
       return response.data;
     } catch (error) {
       throw error;

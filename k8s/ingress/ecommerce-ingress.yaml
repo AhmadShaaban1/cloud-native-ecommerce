@@ -11,7 +11,8 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-  - http:
+  - host: cloudcommerce-shaaban.com
+    http:
       paths:
       # APIs FIRST (important)
       - path: /api/auth

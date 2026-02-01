@@ -200,6 +200,85 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+app.get('/api/orders/my-orders', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const jwt = require('jsonwebtoken');
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
+      const userId = decoded.email;
+      
+      const orders = await Order.find({ userId })
+        .sort({ createdAt: -1 });
+      
+      res.status(200).json({
+        count: orders.length,
+        orders
+      });
+    } catch (jwtError) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+// Cancel order endpoint
+app.patch('/api/orders/:id/cancel', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (order.status === 'completed') {
+      return res.status(400).json({ error: 'Cannot cancel completed order' });
+    }
+
+    order.status = 'cancelled';
+    order.updatedAt = Date.now();
+    await order.save();
+
+    res.status(200).json({
+      message: 'Order cancelled successfully',
+      order
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to cancel order' });
+  }
+});
+
+// Order stats endpoint
+app.get('/api/orders/stats', async (req, res) => {
+  try {
+    const totalOrders = await Order.countDocuments();
+    const pendingOrders = await Order.countDocuments({ status: 'pending' });
+    const completedOrders = await Order.countDocuments({ status: 'completed' });
+    const totalRevenue = await Order.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+
+    res.status(200).json({
+      totalOrders,
+      pendingOrders,
+      completedOrders,
+      totalRevenue: totalRevenue[0]?.total || 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+
 app.listen(PORT, () => {
   console.log(`✅ Order Service running on port ${PORT}`);
 });

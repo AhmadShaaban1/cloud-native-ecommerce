@@ -19,7 +19,19 @@ spec:
     spec:
       containers:
       - name: product-service
+<<<<<<< Updated upstream
         image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/product-service:latest
+=======
+        image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/product-service:sha-c45e673
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+              - ALL
+>>>>>>> Stashed changes
         ports:
         - containerPort: 3002
           name: http

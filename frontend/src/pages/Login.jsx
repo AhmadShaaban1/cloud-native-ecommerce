@@ -14,10 +14,13 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+
+
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -25,8 +28,15 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const from = location.state?.from || '/';
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,13 +48,13 @@ const Login = () => {
 
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     }
@@ -54,7 +64,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -63,10 +73,13 @@ const Login = () => {
 
     try {
       setLoading(true);
-      await login(formData);
-      navigate(from);
+      setServerError('');
+
+      await login(formData); // token saved here
+      navigate(from, { replace: true });
+
     } catch (error) {
-      console.error('Login error:', error);
+      setServerError(error.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -121,6 +134,11 @@ const Login = () => {
               ),
             }}
           />
+          {serverError && (
+            <Typography color="error" align="center" sx={{ mt: 1 }}>
+              {serverError}
+            </Typography>
+          )}
 
           <Button
             type="submit"
