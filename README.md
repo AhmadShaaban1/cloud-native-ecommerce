@@ -18,7 +18,7 @@ This project demonstrates **production-level DevOps practices** with a fully fun
 - 🔄 **Automated CI/CD** with GitHub Actions
 - 📊 **Full observability** - Prometheus, Grafana, Loki
 - 🔐 **Enterprise security** - Network policies, RBAC, secrets management
-- 🏗️ **100% Infrastructure as Code** with Terraform
+- 🏗️ **100% Infrastructure as Code** with Terraform.
 - 🐳 **Optimized containers** with multi-stage Docker builds
 - ☸️ **Kubernetes-native** deployments with health checks
 
