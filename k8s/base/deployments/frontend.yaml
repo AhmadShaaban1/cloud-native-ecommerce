@@ -17,18 +17,18 @@ spec:
         app: frontend
         tier: frontend
     spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: frontend
         image: 815662139594.dkr.ecr.us-east-1.amazonaws.com/cloud-native-ecommerce/frontend:sha-c45e673
         imagePullPolicy: Always
-<<<<<<< Updated upstream
-=======
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
           capabilities:
             drop: ["ALL"]
->>>>>>> Stashed changes
         ports:
         - containerPort: 80
           name: http
