@@ -25,6 +25,7 @@ jobs:
         node-version: '18'
     - working-directory: services/order-service
       run: |
+        npm install
         npm ci
         npm test || echo "Tests not configured yet"
 
