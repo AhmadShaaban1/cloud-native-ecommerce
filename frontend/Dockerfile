@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Serve with Nginx
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:1.25-alpine
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -31,7 +31,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
 
 # Expose port
-EXPOSE 80
+EXPOSE 8080
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
