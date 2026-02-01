@@ -6,7 +6,12 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80,"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:815662139594:certificate/002485a7-4edc-4aae-9e02-36324ea1c604
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+
     alb.ingress.kubernetes.io/healthcheck-path: /health
 spec:
   ingressClassName: alb
@@ -14,7 +19,6 @@ spec:
   - host: cloudcommerce-shaaban.com
     http:
       paths:
-      # APIs FIRST (important)
       - path: /api/auth
         pathType: Prefix
         backend:
@@ -22,7 +26,6 @@ spec:
             name: user-service
             port:
               number: 80
-
       - path: /api/products
         pathType: Prefix
         backend:
@@ -30,7 +33,6 @@ spec:
             name: product-service
             port:
               number: 80
-
       - path: /api/orders
         pathType: Prefix
         backend:
@@ -38,7 +40,6 @@ spec:
             name: order-service
             port:
               number: 80
-
       - path: /api/payments
         pathType: Prefix
         backend:
@@ -46,8 +47,6 @@ spec:
             name: payment-service
             port:
               number: 80
-
-      # Frontend LAST
       - path: /
         pathType: Prefix
         backend:
