@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -33,10 +33,6 @@ const Products = () => {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [page, category, sortBy, searchParams]);
-
   const fetchCategories = async () => {
     try {
       const response = await productService.getCategories();
@@ -47,7 +43,7 @@ const Products = () => {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -75,7 +71,11 @@ const Products = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, category, sortBy, searchParams]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleSearch = (e) => {
     e.preventDefault();

@@ -102,10 +102,12 @@ export const healthCheck = async () => {
   }
 };
 
-export default {
+const api = {
   userApi,
   productApi,
   orderApi,
   paymentApi,
   healthCheck,
 };
+
+export default api;
