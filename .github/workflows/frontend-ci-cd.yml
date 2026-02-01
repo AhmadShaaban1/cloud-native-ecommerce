@@ -12,7 +12,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: cloud-native-ecommerce/frontend
+  ECR_REPOSITORY: cloud-native-ecommerce/frontend 
 
 jobs:
   build-and-deploy:
