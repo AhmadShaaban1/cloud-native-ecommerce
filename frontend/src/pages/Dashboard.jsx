@@ -62,7 +62,7 @@ const Dashboard = () => {
   const fetchStats = useCallback(async () => {
     try {
       const response = await orderService.getOrderStats();
-      setStats(response.stats || stats);
+      setStats(prevStats => response.stats || prevStats); 
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
