@@ -256,7 +256,7 @@ app.patch('/api/orders/:id/cancel', async (req, res) => {
   }
 });
 
-// Order stats endpoint
+// Order stats endpoint //
 app.get('/api/orders/stats', async (req, res) => {
   try {
     const totalOrders = await Order.countDocuments();

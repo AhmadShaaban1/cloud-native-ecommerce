@@ -286,7 +286,7 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-// Delete product
+// Delete product //
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);

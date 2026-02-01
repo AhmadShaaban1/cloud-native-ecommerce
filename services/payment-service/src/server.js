@@ -134,7 +134,7 @@ app.get('/api/payments', (req, res) => {
   }
 });
 
-// Get payment methods
+// Get payment methods //
 app.get('/api/payments/methods', (req, res) => {
   res.status(200).json({
     methods: [

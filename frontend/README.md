@@ -33,3 +33,7 @@ docker run -p 3000:80 ecommerce-frontend
 3. Test locally with `npm start`
 4. Build Docker image
 5. Deploy to Kubernetes
+
+kubectl port-forward service/frontend 8080:80
+
+
